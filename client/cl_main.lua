@@ -131,6 +131,25 @@ function DoesPlayerHaveWeapon(itemName)
     return false
 end
 
+function GetWeaponComponents(weaponItem)
+    local components = {}
+
+    if GetResourceState('ox_inventory') == 'started' then
+        local cleanName = weaponItem:lower():gsub("^weapon_", ""):gsub("^WEAPON_", "")
+        local searchName = "WEAPON_" .. string.upper(cleanName)
+
+        local items = exports.ox_inventory:Search('slots', searchName)
+        if items and #items > 0 then
+            local item = items[1]
+            if item.metadata and item.metadata.components then
+                components = item.metadata.components
+            end
+        end
+    end
+
+    return components
+end
+
 function DoesPlayerRequireWeapons()
     local isDead = IsPedDeadOrDying(PlayerPedId(), true)
     return not (isDead)
@@ -140,25 +159,37 @@ function SpawnWeaponProp(weaponData)
     local ped = PlayerPedId()
     local x, y, z = table.unpack(GetEntityCoords(ped))
 
-    if not HasModelLoaded(weaponData.PropHash) then
-        LoadPropDict(weaponData.PropHash)
-    end
+    local weaponHash = GetHashKey(weaponData.Item)
 
-    local weaponEntity = CreateObject(weaponData.PropHash, x, y, z + 0.2, true, true, true)
+    local weaponEntity = CreateWeaponObject(weaponHash, 1, x, y, z + 0.2, true, 1.0, 0)
     while not DoesEntityExist(weaponEntity) do
         Wait(50)
     end
 
     SetEntityCollision(weaponEntity, false, false)
 
+    -- Apply attachments
+    local components = GetWeaponComponents(weaponData.Item)
+    for _, comp in ipairs(components) do
+        local fullCompName = "COMPONENT_" .. string.upper(comp)
+        local compHash = GetHashKey(fullCompName)
+        GiveWeaponComponentToWeaponObject(weaponEntity, compHash)
+    end
+
     local bone = GetPedBoneIndex(ped, weaponData.Bone)
     local weaponPosition = GetPlayerWeaponPosition(weaponData)
     local xpos, ypos, zpos, xrot, yrot, zrot = table.unpack(weaponPosition)
     
     AttachEntityToEntity(weaponEntity, ped, bone, xpos, ypos, zpos, xrot, yrot, zrot, true, true, false, true, 1, true)
-    SetModelAsNoLongerNeeded(weaponData.PropHash)
 
-    TriggerServerEvent('gs_weaponcarry:weaponPropSpawned', NetworkGetNetworkIdFromEntity(weaponEntity))
+    -- === FIXED NETWORKING (removes the warning) ===
+    local netId = ObjToNet(weaponEntity)
+    NetworkSetNetworkIdDynamic(netId, false)
+    SetNetworkIdExistsOnAllMachines(netId, true)
+
+    TriggerServerEvent('gs_weaponcarry:weaponPropSpawned', netId)
+    SetModelAsNoLongerNeeded(weaponHash)
+
     return weaponEntity
 end
 
