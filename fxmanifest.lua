@@ -3,7 +3,7 @@ games { 'gta5' }
 
 author 'Original Eviate, Butcher reworked'
 description 'Fuck me daddy'
-version '1.0.39'
+version '1.0.47'
 
 lua54 'yes'
 

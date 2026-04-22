@@ -15,19 +15,20 @@ end)
 
 -- We have to wait for the player to load in, before attaching any props to the player
 function onPlayerLoaded(cb)
-    local pedModel = nil
-    while pedModel == GetHashKey('Michael') do
+    local playerPed = PlayerPedId()
+
+    while not DoesEntityExist(playerPed) do
         Wait(100)
-        pedModel = GetEntityModel(PlayerPedId())
+        playerPed = PlayerPedId()
     end
 
-    if (GetResourceState('esx_multicharacter') == 'started') then
-        local ESX = exports['es_extended']:getSharedObject()
-        while (not ESX.PlayerLoaded) do
-            ESX = exports['es_extended']:getSharedObject()
-            Wait(500)
-        end
+    -- Wait until ox_inventory is ready
+    while not exports.ox_inventory do
+        Wait(100)
     end
+
+    Wait(500) -- give it time to populate items
+
     cb()
 end
 

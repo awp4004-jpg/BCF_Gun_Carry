@@ -18,7 +18,7 @@ local function RequestPresets()
 end
 
 -- Best QBCore moment
-RegisterNetEvent('QBCore:PlayerLoaded', function()
+RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
     Wait(3000)           -- longer delay for safety
     RequestPresets()
 end)
