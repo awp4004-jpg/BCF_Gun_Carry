@@ -17,17 +17,14 @@ end)
 function onPlayerLoaded(cb)
     local playerPed = PlayerPedId()
 
+    -- Wait until player ped is valid
     while not DoesEntityExist(playerPed) do
         Wait(100)
         playerPed = PlayerPedId()
     end
 
-    -- Wait until ox_inventory is ready
-    while not exports.ox_inventory do
-        Wait(100)
-    end
-
-    Wait(500) -- give it time to populate items
+    -- Optional: wait a bit for skin/inventory to apply
+    Wait(500)
 
     cb()
 end
